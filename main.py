@@ -1,90 +1,81 @@
 import streamlit as st
+import time
 
-# 페이지 세팅
-st.set_page_config(page_title="MBTI Career Matcher", page_icon="🧭", layout="centered")
+# 페이지 설정
+st.set_page_config(page_title="MBTI 진로 추천", page_icon="🌟", layout="centered")
 
-# 스타일링용 HTML (모던하고 미니멀하게)
+# 스타일
 st.markdown("""
     <style>
-    html, body {
-        background-color: #f8f9fa;
-    }
     .main-title {
         text-align: center;
-        font-size: 3rem;
+        font-size: 2.5em;
         font-weight: 600;
         color: #2c3e50;
-        margin-bottom: 0.2em;
     }
     .subtitle {
         text-align: center;
-        font-size: 1.2rem;
+        font-size: 1.1em;
         color: #7f8c8d;
         margin-bottom: 2em;
     }
-    .career-box {
-        background-color: white;
+    .job-box {
+        background-color: #ffffff;
+        padding: 1.2em;
         border-radius: 10px;
-        padding: 1.5em;
-        margin: 1em 0;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
-    }
-    .career-box h3 {
-        color: #34495e;
-        font-size: 1.2rem;
-    }
-    .career-item {
-        font-size: 1.05rem;
-        padding: 0.3em 0;
-    }
-    .footer {
-        text-align: center;
-        color: #bdc3c7;
-        font-size: 0.9rem;
-        margin-top: 3em;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 1.5em;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 메인 타이틀
-st.markdown("<div class='main-title'>🔎 Find Your Fit</div>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>MBTI로 알아보는 나에게 딱 맞는 진로 ✨</div>", unsafe_allow_html=True)
+# 제목
+st.markdown("<div class='main-title'>🔍 MBTI 진로 추천기</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>당신의 성격에 꼭 맞는 직업을 찾아드릴게요.</div>", unsafe_allow_html=True)
 
-# MBTI 데이터
-mbti_jobs = {
-    "ISTJ": ["회계사 📊", "공무원 🏛️", "군인 🪖"],
-    "ISFJ": ["간호사 💉", "초등학교 교사 📚", "사회복지사 🤝"],
-    "INFJ": ["심리상담사 🧠", "작가 ✍️", "인문학 연구자 🔍"],
-    "INTJ": ["전략기획가 📈", "데이터 분석가 🧮", "과학자 🔬"],
-
-    "ISTP": ["기계 엔지니어 🔧", "정비사 🛠️", "경찰 🚓"],
-    "ISFP": ["패션 디자이너 👗", "플로리스트 🌸", "물리치료사 🧘‍♀️"],
-    "INFP": ["작가 📖", "아동 상담가 🧒", "예술가 🎨"],
-    "INTP": ["연구원 🔬", "프로그래머 💻", "대학 교수 🏫"],
-
-    "ESTP": ["영업 전문가 💼", "이벤트 기획자 🎉", "소방관 🚒"],
-    "ESFP": ["배우 🎭", "MC 🎙️", "여행 가이드 🌍"],
-    "ENFP": ["마케팅 전문가 📢", "기자 🗞️", "교사 👩‍🏫"],
-    "ENTP": ["창업가 🚀", "광고 기획자 🎯", "정치 컨설턴트 🧠"],
-
-    "ESTJ": ["기업 관리자 🏢", "생산 관리자 ⚙️", "군 간부 🎖️"],
-    "ESFJ": ["간호사 👩‍⚕️", "고객 서비스 매니저 🙋", "식품 영양사 🥗"],
-    "ENFJ": ["교사 👨‍🏫", "HR 매니저 🤝", "상담사 🧏"],
-    "ENTJ": ["CEO 🧑‍💼", "전략 컨설턴트 📌", "변호사 ⚖️"]
+# MBTI 데이터 (직업 + 이유)
+mbti_careers = {
+    "INFJ": [
+        {"job": "🧠 심리상담사", "reason": "깊은 공감 능력과 타인에 대한 이해가 뛰어나기 때문이에요."},
+        {"job": "✍️ 작가", "reason": "내면의 풍부한 감성을 글로 풀어내는 데 탁월해요."},
+        {"job": "🔍 인문학 연구자", "reason": "깊이 있는 사고와 분석 능력으로 복잡한 주제를 탐구할 수 있어요."}
+    ],
+    "ENTP": [
+        {"job": "🚀 창업가", "reason": "도전 정신과 창의력으로 새로운 가치를 만들어내는 데 강점이 있어요."},
+        {"job": "🎯 광고 기획자", "reason": "톡톡 튀는 아이디어와 말솜씨로 사람들의 마음을 움직일 수 있어요."},
+        {"job": "🧠 정치 컨설턴트", "reason": "빠른 판단력과 전략적 사고로 세상을 읽는 능력이 뛰어나요."}
+    ],
+    "ISFJ": [
+        {"job": "💉 간호사", "reason": "사람을 돌보고 헌신하는 태도가 직업과 잘 맞아요."},
+        {"job": "📚 초등학교 교사", "reason": "아이들을 세심하게 돌보고, 정성껏 가르칠 수 있어요."},
+        {"job": "🤝 사회복지사", "reason": "타인을 위해 조용히 헌신하는 당신에게 딱이에요."}
+    ],
+    # 다른 MBTI도 필요하면 추가 가능!
 }
 
 # MBTI 선택
-selected = st.selectbox("🌱 당신의 MBTI를 선택하세요", list(mbti_jobs.keys()))
+selected = st.selectbox("당신의 MBTI 유형을 선택하세요", list(mbti_careers.keys()))
 
-# 결과 박스
-if selected:
-    st.markdown(f"<div class='career-box'>", unsafe_allow_html=True)
-    st.markdown(f"<h3>{selected} 유형에게 추천하는 직업은...</h3>", unsafe_allow_html=True)
-    
-    for job in mbti_jobs[selected]:
-        st.markdown(f"<div class='career-item'>✅ {job}</div>", unsafe_allow_html=True)
+# 버튼 클릭 시 결과 출력
+if st.button("🔎 추천 직업 보기"):
+    with st.spinner("당신의 성향을 분석 중입니다... 💭"):
+        time.sleep(2)  # 로딩 연출
 
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("## 🎯 당신에게 어울리는 직업은...")
+
+    for career in mbti_careers[selected]:
+        time.sleep(1.2)  # 등장 템포 조절
+
+        with st.container():
+            st.markdown(f"""
+            <div class='job-box'>
+                <h4 style='margin-bottom: 0.3em;'>{career['job']}</h4>
+                <p style='color: #555;'>{career['reason']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.success("✔️ 진로 탐색의 첫걸음을 응원해요!")
 
 # 푸터
-st.markdown("<div class='footer'>© 2025 MBTI Career Matcher · Designed with ❤️ by ChatGPT</div>", unsafe_allow_html=True)
+st.markdown("<hr>", unsafe_allow_html=True)
+st.markdown("<div style='text-align:center; color:gray;'>© 2025 MBTI Career Matcher</div>", unsafe_allow_html=True)
