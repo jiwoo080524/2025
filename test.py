@@ -1,38 +1,22 @@
 import streamlit as st
 
-# -----------------------
-# 페이지 설정
-# -----------------------
 st.set_page_config(page_title="건강검진 결과 해석 도우미", layout="centered")
 
-st.title("🩺 건강검진 결과 해석 도우미")
-st.markdown("""
-검진 수치를 입력하면, 정상 여부와 건강 관리 팁을 제공해드립니다.
-""")
-
 # -----------------------
-# 사용자 입력
+# 세션 상태 관리
 # -----------------------
-with st.form("health_form"):
-    col1, col2 = st.columns(2)
-    with col1:
-        age = st.number_input("나이", min_value=0, max_value=120, value=30)
-        sbp = st.number_input("수축기 혈압 (mmHg)", value=120)
-        glucose = st.number_input("공복 혈당 (mg/dL)", value=90)
-        chol_total = st.number_input("총 콜레스테롤 (mg/dL)", value=180)
-    with col2:
-        gender = st.selectbox("성별", ["남성", "여성"])
-        dbp = st.number_input("이완기 혈압 (mmHg)", value=80)
-        hdl = st.number_input("HDL 콜레스테롤 (mg/dL)", value=50)
-        ldl = st.number_input("LDL 콜레스테롤 (mg/dL)", value=100)
-        tg = st.number_input("중성지방 (mg/dL)", value=120)
+if "page" not in st.session_state:
+    st.session_state.page = "input"
 
-    submitted = st.form_submit_button("🔍 결과 분석")
+def go_result():
+    st.session_state.page = "result"
+
+def go_back():
+    st.session_state.page = "input"
 
 # -----------------------
 # 판별 함수들
 # -----------------------
-
 def interpret_bp(sbp, dbp):
     if sbp < 120 and dbp < 80:
         return "정상", "🟢", "정상 혈압입니다. 유지하세요."
@@ -81,36 +65,52 @@ def interpret_tg(val):
         return "위험", "🔴", "높은 중성지방 수치입니다. 주의가 필요합니다."
 
 # -----------------------
-# 결과 출력
+# 입력 페이지
 # -----------------------
-if submitted:
-    st.subheader("📋 분석 결과")
+if st.session_state.page == "input":
+    st.title("🩺 건강검진 결과 해석 도우미")
+    st.markdown("검진 수치를 입력하면, 정상 여부와 건강 관리 팁을 제공해드립니다.")
 
-    results = {
-        "혈압": interpret_bp(sbp, dbp),
-        "공복 혈당": interpret_glucose(glucose),
-        "총 콜레스테롤": interpret_chol_total(chol_total),
-        "HDL 콜레스테롤": interpret_hdl(hdl, gender),
-        "LDL 콜레스테롤": interpret_ldl(ldl),
-        "중성지방": interpret_tg(tg),
-    }
+    with st.form("health_form"):
+        col1, col2 = st.columns(2)
+        with col1:
+            age = st.number_input("나이", min_value=0, max_value=120, value=30)
+            sbp = st.number_input("수축기 혈압 (mmHg)", value=120)
+            glucose = st.number_input("공복 혈당 (mg/dL)", value=90)
+            chol_total = st.number_input("총 콜레스테롤 (mg/dL)", value=180)
+        with col2:
+            gender = st.selectbox("성별", ["남성", "여성"])
+            dbp = st.number_input("이완기 혈압 (mmHg)", value=80)
+            hdl = st.number_input("HDL 콜레스테롤 (mg/dL)", value=50)
+            ldl = st.number_input("LDL 콜레스테롤 (mg/dL)", value=100)
+            tg = st.number_input("중성지방 (mg/dL)", value=120)
 
-    # 1️⃣ 요약 카운트
-    summary = {"정상": 0, "경계": 0, "위험": 0}
-    for level, _, _ in results.values():
-        summary[level] += 1
+        submitted = st.form_submit_button("🔍 결과 분석", on_click=go_result)
 
-    col1, col2, col3 = st.columns(3)
-    col1.metric("정상", summary["정상"])
-    col2.metric("경계", summary["경계"])
-    col3.metric("위험", summary["위험"])
+    # 결과 저장
+    if submitted:
+        st.session_state.results = {
+            "혈압": interpret_bp(sbp, dbp),
+            "공복 혈당": interpret_glucose(glucose),
+            "총 콜레스테롤": interpret_chol_total(chol_total),
+            "HDL 콜레스테롤": interpret_hdl(hdl, gender),
+            "LDL 콜레스테롤": interpret_ldl(ldl),
+            "중성지방": interpret_tg(tg),
+        }
 
-    st.divider()
+# -----------------------
+# 결과 페이지 (항목별만 출력)
+# -----------------------
+elif st.session_state.page == "result":
+    st.title("📋 분석 결과")
 
-    # 2️⃣ 상세 결과 (색상 강조)
+    results = st.session_state.get("results", {})
+
     color_map = {"정상": "green", "경계": "orange", "위험": "red"}
-
     for name, (level, icon, message) in results.items():
         st.markdown(f"### {icon} {name} - :{color_map[level]}[{level}]")
         st.write(f"➡️ {message}")
         st.divider()
+
+    if st.button("⬅️ 다시 입력하기", on_click=go_back):
+        pass
