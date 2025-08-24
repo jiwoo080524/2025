@@ -8,12 +8,6 @@ st.set_page_config(page_title="건강검진 결과 해석 도우미", layout="ce
 if "page" not in st.session_state:
     st.session_state.page = "input"
 
-def go_result():
-    st.session_state.page = "result"
-
-def go_back():
-    st.session_state.page = "input"
-
 # -----------------------
 # 판별 함수들
 # -----------------------
@@ -65,6 +59,20 @@ def interpret_tg(val):
         return "위험", "🔴", "높은 중성지방 수치입니다. 주의가 필요합니다."
 
 # -----------------------
+# 결과 저장 + 페이지 전환 함수
+# -----------------------
+def save_and_go_result(sbp, dbp, glucose, chol_total, hdl, ldl, tg, gender):
+    st.session_state.results = {
+        "혈압": interpret_bp(sbp, dbp),
+        "공복 혈당": interpret_glucose(glucose),
+        "총 콜레스테롤": interpret_chol_total(chol_total),
+        "HDL 콜레스테롤": interpret_hdl(hdl, gender),
+        "LDL 콜레스테롤": interpret_ldl(ldl),
+        "중성지방": interpret_tg(tg),
+    }
+    st.session_state.page = "result"
+
+# -----------------------
 # 입력 페이지
 # -----------------------
 if st.session_state.page == "input":
@@ -85,18 +93,11 @@ if st.session_state.page == "input":
             ldl = st.number_input("LDL 콜레스테롤 (mg/dL)", value=100)
             tg = st.number_input("중성지방 (mg/dL)", value=120)
 
-        submitted = st.form_submit_button("🔍 결과 분석", on_click=go_result)
-
-    # 결과 저장
-    if submitted:
-        st.session_state.results = {
-            "혈압": interpret_bp(sbp, dbp),
-            "공복 혈당": interpret_glucose(glucose),
-            "총 콜레스테롤": interpret_chol_total(chol_total),
-            "HDL 콜레스테롤": interpret_hdl(hdl, gender),
-            "LDL 콜레스테롤": interpret_ldl(ldl),
-            "중성지방": interpret_tg(tg),
-        }
+        submitted = st.form_submit_button(
+            "🔍 결과 분석",
+            on_click=save_and_go_result,
+            args=(sbp, dbp, glucose, chol_total, hdl, ldl, tg, gender)
+        )
 
 # -----------------------
 # 결과 페이지 (항목별만 출력)
@@ -105,12 +106,12 @@ elif st.session_state.page == "result":
     st.title("📋 분석 결과")
 
     results = st.session_state.get("results", {})
-
     color_map = {"정상": "green", "경계": "orange", "위험": "red"}
+
     for name, (level, icon, message) in results.items():
         st.markdown(f"### {icon} {name} - :{color_map[level]}[{level}]")
         st.write(f"➡️ {message}")
         st.divider()
 
-    if st.button("⬅️ 다시 입력하기", on_click=go_back):
-        pass
+    if st.button("⬅️ 다시 입력하기"):
+        st.session_state.page = "input"
