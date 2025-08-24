@@ -95,7 +95,22 @@ if submitted:
         "중성지방": interpret_tg(tg),
     }
 
+    # 1️⃣ 요약 카운트
+    summary = {"정상": 0, "경계": 0, "위험": 0}
+    for level, _, _ in results.values():
+        summary[level] += 1
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("정상", summary["정상"])
+    col2.metric("경계", summary["경계"])
+    col3.metric("위험", summary["위험"])
+
+    st.divider()
+
+    # 2️⃣ 상세 결과 (색상 강조)
+    color_map = {"정상": "green", "경계": "orange", "위험": "red"}
+
     for name, (level, icon, message) in results.items():
-        st.markdown(f"### {icon} {name} - {level}")
+        st.markdown(f"### {icon} {name} - :{color_map[level]}[{level}]")
         st.write(f"➡️ {message}")
         st.divider()
