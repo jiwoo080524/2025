@@ -115,44 +115,4 @@ elif st.session_state.page == "result":
 
     if st.button("⬅️ 다시 입력하기"):
         st.session_state.page = "input"
-        elif st.session_state.page == "result":
-    st.title("📋 분석 결과")
-
-    results = st.session_state.get("results", {})
-    color_map = {"정상": "green", "경계": "orange", "위험": "red"}
-
-    # ✅ 결과 요약 계산
-    summary_counts = {"정상": 0, "경계": 0, "위험": 0}
-    for _, (level, _, _) in results.items():
-        summary_counts[level] += 1
-
-    total = sum(summary_counts.values())
-
-    # ✅ 요약 메시지 생성
-    if summary_counts["위험"] > 0:
-        summary_msg = "⚠️ 건강 위험 요소가 있습니다. 전문가 상담이 필요합니다."
-    elif summary_counts["경계"] > 0:
-        summary_msg = "🟡 일부 수치가 경계입니다. 생활습관 개선을 권장합니다."
-    else:
-        summary_msg = "🟢 전반적으로 건강한 상태입니다. 현재 상태를 유지하세요!"
-
-    # ✅ 결과 요약 출력
-    with st.expander("📊 건강 상태 요약 보기", expanded=True):
-        st.markdown(f"""
-        - ✅ 정상 항목: **{summary_counts['정상']}개**
-        - ⚠️ 경계 항목: **{summary_counts['경계']}개**
-        - 🔴 위험 항목: **{summary_counts['위험']}개**
-        """)
-        st.markdown(f"**📌 종합 평가:** {summary_msg}")
-
-    st.divider()
-
-    # ✅ 개별 항목 출력
-    for name, (level, icon, message) in results.items():
-        st.markdown(f"### {icon} {name} - :{color_map[level]}[{level}]")
-        st.write(f"➡️ {message}")
-        st.divider()
-
-    if st.button("⬅️ 다시 입력하기"):
-        st.session_state.page = "input"
-
+      
